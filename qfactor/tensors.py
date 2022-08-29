@@ -66,12 +66,12 @@ class CircuitTensor():
         Apply the specified gate on the right of the circuit.
 
              .-----.   .------.
-          0 -|     |---|      |-
-          1 -|     |---| gate |-
+          n -|     |---|      |-
+        n+1 -|     |---| gate |-
              .     .   '------'
              .     .
              .     .
-        n-1 -|     |------------
+       2n-1 -|     |------------
              '-----'
         
         Note that apply the gate on the right is equivalent to
@@ -83,34 +83,36 @@ class CircuitTensor():
 
             inverse (bool): If true, apply the inverse of gate.
         """
-
-        left_perm = list( gate.location )
-        mid_perm = [ x for x in range( self.num_qubits ) if x not in gate.location ]
-        right_perm = [ x + self.num_qubits for x in range( self.num_qubits ) ]
-
-        utry = gate.utry.conj().T if inverse else gate.utry
-
-        perm = left_perm + mid_perm + right_perm
-        self.tensor = self.tensor.transpose( perm )
-        self.tensor = self.tensor.reshape( ( 2 ** len( left_perm ), -1 ) )
-        self.tensor = utry @ self.tensor
-
-        self.tensor = self.tensor.reshape( [2] * 2 * self.num_qubits )
-        inv_perm = np.argsort( perm )
-        self.tensor = self.tensor.transpose( inv_perm )
-
+        
+        gate_tensor = gate.get_tensor_format()
+ 
+        if inverse:
+            offset = 0
+            gate_tensor = gate_tensor.conj()
+        else:
+            offset = gate.gate_size
+            
+        gate_tensor_indexs = [i for i in range(2*gate.gate_size)]
+        
+        circuit_tensor_indexs = [2*gate.gate_size + i  for i in range(2*self.num_qubits)]        
+        output_tensor_index = [ 2*gate.gate_size + i  for i in range(2*self.num_qubits)]
+        for i, loc in enumerate(gate.location):
+            circuit_tensor_indexs[loc] = offset + i
+            output_tensor_index[loc] = (gate.gate_size - offset) + i
+        
+        self.tensor  = np.einsum(gate_tensor, gate_tensor_indexs, self.tensor, circuit_tensor_indexs, output_tensor_index)
 
     def apply_left ( self, gate, inverse = False ):
         """
         Apply the specified gate on the left of the circuit.
 
              .------.   .-----.
-          0 -|      |---|     |-
-          1 -| gate |---|     |-
+          2 -|      |---|     |-
+          3 -| gate |---|     |-
              '------'   .     .
                         .     .
                         .     .
-        n-1 ------------|     |-
+       2n-1 ------------|     |-
                         '-----'
         
         Note that apply the gate on the left is equivalent to
@@ -123,21 +125,23 @@ class CircuitTensor():
             inverse (bool): If true, apply the inverse of gate.
         """
 
-        left_perm = list( range( self.num_qubits ) )
-        mid_perm = [ x + self.num_qubits for x in left_perm if x not in gate.location ]
-        right_perm = [ x + self.num_qubits for x in gate.location ]
+        gate_tensor = gate.get_tensor_format()
+        if inverse:            
+            offset = gate.gate_size
+            gate_tensor = gate_tensor.conj()
+        else:
+            offset = 0
+            
+        gate_tensor_indexs = [i for i in range(2*gate.gate_size)]
+        
+        circuit_tensor_indexs = [2*gate.gate_size + i  for i in range(2*self.num_qubits)]        
+        output_tensor_index = [ 2*gate.gate_size + i  for i in range(2*self.num_qubits)]
+        for i, loc in enumerate(gate.location):
+            circuit_tensor_indexs[self.num_qubits + loc] = offset + i
+            output_tensor_index[self.num_qubits + loc] = (gate.gate_size - offset) + i
 
-        utry = gate.utry.conj().T if inverse else gate.utry
-
-        perm = left_perm + mid_perm + right_perm
-        self.tensor = self.tensor.transpose( perm )
-        self.tensor = self.tensor.reshape( ( -1, 2 ** len( right_perm ) ) )
-        self.tensor = self.tensor @ utry
-
-        self.tensor = self.tensor.reshape( [2] * 2 * self.num_qubits )
-        inv_perm = np.argsort( perm )
-        self.tensor = self.tensor.transpose( inv_perm )
-
+        self.tensor  = np.einsum(gate_tensor, gate_tensor_indexs, self.tensor, circuit_tensor_indexs, output_tensor_index)
+        
     def calc_env_matrix ( self, location ):
         """
         Calculates the environmental matrix of the tensor with
@@ -151,17 +155,14 @@ class CircuitTensor():
             (np.ndarray): The environmental matrix.
         """
 
-        left_perm = list( range( self.num_qubits ) )
-        left_perm = [ x for x in left_perm if x not in location ]
-        left_perm = left_perm + [ x + self.num_qubits for x in left_perm ]
-        right_perm = list( location ) + [ x + self.num_qubits
-                                          for x in location ]
+        contraction_indexs = list(range(self.num_qubits))+list(range(self.num_qubits))
+        for i, loc in enumerate(location):            
+            contraction_indexs[loc+self.num_qubits] = self.num_qubits + i + 1
 
-        perm = left_perm + right_perm
-        a = np.transpose( self.tensor, perm )
-        a = np.reshape( a, ( 2 ** ( self.num_qubits - len( location ) ),
-                             2 ** ( self.num_qubits - len( location ) ),
-                             2 ** len( location ),
-                             2 ** len( location ) ) )
-        return np.trace( a )
+        contraction_indexs_str = "".join([chr(ord('a')+i) for i in contraction_indexs])
+
+        env_tensor = np.einsum(contraction_indexs_str, self.tensor)
+        env_mat = env_tensor.reshape((2**len(location), -1))
+
+        return env_mat
 

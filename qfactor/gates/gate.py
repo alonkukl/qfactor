@@ -70,14 +70,14 @@ class Gate():
         """
         Converts the gate's operation into a tensor network format.
 
-        Indices are counted top to bottom, left to right:
+        Indices are counted top to bottom, right to left:
              .-----.
-          0 -|     |- n
-          1 -|     |- n+1
+          n -|     |- 0
+        n+1 -|     |- 1
              .     .
              .     .
              .     .
-        n-1 -|     |- 2n-1
+       2n-1 -|     |- n-1
              '-----'
 
         Args:
