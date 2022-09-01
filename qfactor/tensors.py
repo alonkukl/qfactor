@@ -155,6 +155,13 @@ class CircuitTensor():
             (np.ndarray): The environmental matrix.
         """
 
+        if not isinstance( location, tuple ):
+            raise TypeError("Location given is not a tuple")
+            
+        if not utils.is_valid_location( location, self.num_qubits ):
+            raise ValueError( "Gate location mismatch with circuit tensor.", location, self.num_qubits )
+        
+
         contraction_indexs = list(range(self.num_qubits))+list(range(self.num_qubits))
         for i, loc in enumerate(location):            
             contraction_indexs[loc+self.num_qubits] = self.num_qubits + i + 1

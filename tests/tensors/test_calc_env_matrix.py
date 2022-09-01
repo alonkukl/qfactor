@@ -15,7 +15,7 @@ class TestCalcEnvMatrix ( ut.TestCase ):
 
         ct = CircuitTensor( u1, [] )
 
-        env = ct.calc_env_matrix( [0, 1, 2] )
+        env = ct.calc_env_matrix( (0, 1, 2) )
         self.assertTrue( np.allclose( env, u2  ) )
 
 
@@ -25,7 +25,7 @@ class TestCalcEnvMatrix ( ut.TestCase ):
 
         ct = CircuitTensor( u1, [] )
 
-        self.assertRaises( ValueError, ct.calc_env_matrix, [0, 1, 2, 3] )
+        self.assertRaises( ValueError, ct.calc_env_matrix, (0, 1, 2, 3) )
         self.assertRaises( TypeError, ct.calc_env_matrix, "a" )
 
 
