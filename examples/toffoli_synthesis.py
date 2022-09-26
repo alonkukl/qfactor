@@ -25,11 +25,11 @@ toffoli = jnp.array( [ [ 1, 0, 0, 0, 0, 0, 0, 0 ],
 # Start with the circuit structure
 # and an initial guess for the gate's unitaries.
 # Here we use randomly generated unitaries for initial guess.
-circuit = [ Gate( jax.array(unitary_group.rvs(4)), (1, 2) ),
-            Gate( jax.array(unitary_group.rvs(4)), (0, 2) ),
-            Gate( jax.array(unitary_group.rvs(4)), (1, 2) ),
-            Gate( jax.array(unitary_group.rvs(4)), (0, 2) ),
-            Gate( jax.array(unitary_group.rvs(4)), (0, 1) ) ]
+circuit = [ Gate( jnp.array(unitary_group.rvs(4)), (1, 2) ),
+            Gate( jnp.array(unitary_group.rvs(4)), (0, 2) ),
+            Gate( jnp.array(unitary_group.rvs(4)), (1, 2) ),
+            Gate( jnp.array(unitary_group.rvs(4)), (0, 2) ),
+            Gate( jnp.array(unitary_group.rvs(4)), (0, 1) ) ]
 
 # Note: the Gate object also has an optional boolean parameter "fixed"
 # If "fixed" is set to true, that gate's unitary will not change.
