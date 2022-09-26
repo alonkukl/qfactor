@@ -126,7 +126,7 @@ def optimize ( circuit, target, diff_tol_a = 1e-12, diff_tol_r = 1e-6,
             ct.apply_right( circuit[k] )
 
         c2 = c1
-        c1 = jnp.abs( np.trace( ct.utry ) )
+        c1 = jnp.abs( jnp.trace( ct.utry ) )
         c1 = 1 - ( c1 / ( 2 ** ct.num_qubits ) )
 
         if c1 <= dist_tol:
