@@ -2,7 +2,7 @@
 
 
 import numpy as np
-
+import jax.numpy as jnp
 from qfactor import utils
 from qfactor.gates import Gate
 
@@ -49,7 +49,7 @@ class RzGate ( Gate ):
 
     @property
     def utry ( self ):
-        return np.array( [ [ 1, 0 ],
+        return jnp.array( [ [ 1, 0 ],
                            [ 0, np.exp( 1j * self.theta ) ] ] )
 
     def update ( self, env, slowdown_factor ):
@@ -69,14 +69,14 @@ class RzGate ( Gate ):
         if self.fixed:
             return
 
-        a = np.real( env[1, 1] )
-        b = np.imag( env[1, 1] )
-        arctan = np.arctan( b / a )
+        a = jnp.real( env[1, 1] )
+        b = jnp.imag( env[1, 1] )
+        arctan = jnp.arctan( b / a )
 
         if a < 0 and b > 0:
-            arctan += np.pi
+            arctan += jnp.pi
         elif a < 0 and b < 0:
-            arctan -= np.pi
+            arctan -= jnp.pi
 
         new_theta = -arctan
         self.theta = ( ( 1 - slowdown_factor ) * new_theta

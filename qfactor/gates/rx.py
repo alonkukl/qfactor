@@ -3,6 +3,8 @@
 
 import numpy as np
 
+import jax.numpy as jnp
+
 from qfactor import utils
 from qfactor.gates import Gate
 
@@ -49,9 +51,9 @@ class RxGate ( Gate ):
 
     @property
     def utry ( self ):
-        cos = np.cos( self.theta / 2 )
-        sin = np.sin( self.theta / 2 )
-        return np.array( [ [ cos, -1j * sin ],
+        cos = jnp.cos( self.theta / 2 )
+        sin = jnp.sin( self.theta / 2 )
+        return jnp.array( [ [ cos, -1j * sin ],
                            [ -1j * sin, cos ] ] )
 
     def update ( self, env, slowdown_factor ):
@@ -71,9 +73,9 @@ class RxGate ( Gate ):
         if self.fixed:
             return
 
-        a = np.real( env[0, 0] + env[1, 1] )
-        b = np.imag( env[0, 1] + env[1, 0] )
-        new_theta = 2 * np.arccos( a / np.sqrt( a ** 2 + b ** 2 ) )
+        a = jnp.real( env[0, 0] + env[1, 1] )
+        b = jnp.imag( env[0, 1] + env[1, 0] )
+        new_theta = 2 * jnp.arccos( a / jnp.sqrt( a ** 2 + b ** 2 ) )
         new_theta *= -1 if b < 0 else 1
         self.theta = ( ( 1 - slowdown_factor ) * new_theta
                        + slowdown_factor * self.theta )

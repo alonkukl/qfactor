@@ -1,7 +1,8 @@
 """This module implements the CircuitTensor class."""
 
 import logging
-
+import jax
+import jax.numpy as jnp
 import numpy as np
 
 from qfactor import utils
@@ -100,7 +101,7 @@ class CircuitTensor():
             circuit_tensor_indexs[loc] = offset + i
             output_tensor_index[loc] = (gate.gate_size - offset) + i
         
-        self.tensor  = np.einsum(gate_tensor, gate_tensor_indexs, self.tensor, circuit_tensor_indexs, output_tensor_index)
+        self.tensor  = jnp.einsum(gate_tensor, gate_tensor_indexs, self.tensor, circuit_tensor_indexs, output_tensor_index)
 
     def apply_left ( self, gate, inverse = False ):
         """
@@ -140,7 +141,7 @@ class CircuitTensor():
             circuit_tensor_indexs[self.num_qubits + loc] = offset + i
             output_tensor_index[self.num_qubits + loc] = (gate.gate_size - offset) + i
 
-        self.tensor  = np.einsum(gate_tensor, gate_tensor_indexs, self.tensor, circuit_tensor_indexs, output_tensor_index)
+        self.tensor  = jnp.einsum(gate_tensor, gate_tensor_indexs, self.tensor, circuit_tensor_indexs, output_tensor_index)
         
     def calc_env_matrix ( self, location ):
         """
@@ -168,7 +169,7 @@ class CircuitTensor():
 
         contraction_indexs_str = "".join([chr(ord('a')+i) for i in contraction_indexs])
 
-        env_tensor = np.einsum(contraction_indexs_str, self.tensor)
+        env_tensor = jnp.einsum(contraction_indexs_str, self.tensor)
         env_mat = env_tensor.reshape((2**len(location), -1))
 
         return env_mat

@@ -3,6 +3,7 @@
 import logging
 
 import numpy as np
+import jax.numpy as jnp
 
 
 logger = logging.getLogger( "qfactor" )
@@ -14,7 +15,7 @@ def get_num_qubits ( M ):
     if not is_square_matrix( M ):
         raise TypeError( "Invalid matrix." )
 
-    return int( np.log2( len( M ) ) )
+    return int( jnp.log2( len( M ) ) )
 
 
 def is_valid_location ( location, num_qubits = None ):
@@ -58,7 +59,7 @@ def is_valid_location ( location, num_qubits = None ):
 def is_matrix ( M ):
     """Checks if M is a matrix."""
 
-    if not isinstance( M, np.ndarray ): 
+    if not isinstance( M, jnp.ndarray ): 
         logger.debug( "M is not an numpy array." )
         return False
 
@@ -89,17 +90,17 @@ def is_unitary ( U, tol = 1e-12 ):
 
     X = U @ U.conj().T
     Y = U.conj().T @ U
-    I = np.identity( X.shape[0] )
+    I = jnp.identity( X.shape[0] )
 
-    if not np.allclose( X, I, rtol = 0, atol = tol ):
+    if not jnp.allclose( X, I, rtol = 0, atol = tol ):
         if logger.isEnabledFor( logging.DEBUG ):
-            norm = np.linalg.norm( X - I )
+            norm = jnp.linalg.norm( X - I )
             logger.debug( "Failed unitary condition, ||UU^d - I|| = %e" % norm )
         return False
     
-    if not np.allclose( Y, I, rtol = 0, atol = tol ):
+    if not jnp.allclose( Y, I, rtol = 0, atol = tol ):
         if logger.isEnabledFor( logging.DEBUG ):
-            norm = np.linalg.norm( Y - I )
+            norm = jnp.linalg.norm( Y - I )
             logger.debug( "Failed unitary condition, ||U^dU - I|| = %e" % norm )
         return False
     

@@ -1,8 +1,8 @@
 """This module implements the Gate class."""
 
 
-import numpy as np
 import scipy.linalg as la
+import jax.scipy.linalg as jla
 
 from qfactor import utils
 
@@ -61,7 +61,7 @@ class Gate():
                 The larger this factor, the slower the optimization.
         """
 
-        u, _, v = la.svd( ( 1 - slowdown_factor ) * env
+        u, _, v = jla.svd( ( 1 - slowdown_factor ) * env
                           + slowdown_factor * self.utry.conj().T )
         self.utry = v.conj().T @ u.conj().T
 

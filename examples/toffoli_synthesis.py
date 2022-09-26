@@ -1,6 +1,8 @@
 """Optimize a 3-qubit circuit to be a toffoli gate."""
 
 import numpy as np
+import jax.numpy as jnp
+import jax
 from scipy.stats import unitary_group
 
 from qfactor import Gate, optimize, get_distance
@@ -11,7 +13,7 @@ import logging
 logging.getLogger( "qfactor" ).setLevel( logging.INFO )
 
 # We will optimize towards the toffoli unitary.
-toffoli = np.array( [ [ 1, 0, 0, 0, 0, 0, 0, 0 ],
+toffoli = jnp.array( [ [ 1, 0, 0, 0, 0, 0, 0, 0 ],
                       [ 0, 1, 0, 0, 0, 0, 0, 0 ],
                       [ 0, 0, 1, 0, 0, 0, 0, 0 ],
                       [ 0, 0, 0, 1, 0, 0, 0, 0 ],
@@ -23,11 +25,11 @@ toffoli = np.array( [ [ 1, 0, 0, 0, 0, 0, 0, 0 ],
 # Start with the circuit structure
 # and an initial guess for the gate's unitaries.
 # Here we use randomly generated unitaries for initial guess.
-circuit = [ Gate( unitary_group.rvs(4), (1, 2) ),
-            Gate( unitary_group.rvs(4), (0, 2) ),
-            Gate( unitary_group.rvs(4), (1, 2) ),
-            Gate( unitary_group.rvs(4), (0, 2) ),
-            Gate( unitary_group.rvs(4), (0, 1) ) ]
+circuit = [ Gate( jax.array(unitary_group.rvs(4)), (1, 2) ),
+            Gate( jax.array(unitary_group.rvs(4)), (0, 2) ),
+            Gate( jax.array(unitary_group.rvs(4)), (1, 2) ),
+            Gate( jax.array(unitary_group.rvs(4)), (0, 2) ),
+            Gate( jax.array(unitary_group.rvs(4)), (0, 1) ) ]
 
 # Note: the Gate object also has an optional boolean parameter "fixed"
 # If "fixed" is set to true, that gate's unitary will not change.

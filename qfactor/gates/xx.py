@@ -2,7 +2,7 @@
 
 
 import numpy as np
-
+import jax.numpy as jnp
 from qfactor import utils
 from qfactor.gates import Gate
 
@@ -48,9 +48,9 @@ class XXGate ( Gate ):
 
     @property
     def utry ( self ):
-        cos = np.cos( self.theta / 2 )
-        isin = -1j * np.sin( self.theta / 2 )
-        return np.array( [ [ cos, 0, 0, isin ],
+        cos = jnp.cos( self.theta / 2 )
+        isin = -1j * jnp.sin( self.theta / 2 )
+        return jnp.array( [ [ cos, 0, 0, isin ],
                            [ 0, cos, isin, 0 ],
                            [ 0, isin, cos, 0 ],
                            [ isin, 0, 0, cos ] ] )
@@ -72,9 +72,9 @@ class XXGate ( Gate ):
         if self.fixed:
             return
 
-        a = np.real( env[0, 0] + env[1, 1] + env[2, 2] + env[3, 3] )
-        b = np.imag( env[0, 3] + env[1, 2] + env[2, 1] + env[3, 0] )
-        new_theta = np.arccos( a / np.sqrt( a ** 2 + b ** 2 ) )
+        a = jnp.real( env[0, 0] + env[1, 1] + env[2, 2] + env[3, 3] )
+        b = jnp.imag( env[0, 3] + env[1, 2] + env[2, 1] + env[3, 0] )
+        new_theta = jnp.arccos( a / np.sqrt( a ** 2 + b ** 2 ) )
         new_theta *= -2 if b < 0 else 2
         self.theta = ( ( 1 - slowdown_factor ) * new_theta
                        + slowdown_factor * self.theta )

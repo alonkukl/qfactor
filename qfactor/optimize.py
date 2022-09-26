@@ -3,6 +3,8 @@
 import logging
 
 import numpy as np
+import jax
+import jax.numpy as jnp
 
 from qfactor import utils
 from qfactor.gates import Gate
@@ -82,8 +84,8 @@ def optimize ( circuit, target, diff_tol_a = 1e-12, diff_tol_r = 1e-6,
         # Termination conditions
         if it > min_iters:
 
-            if np.abs(c1 - c2) <= diff_tol_a + diff_tol_r * np.abs( c1 ):
-                diff = np.abs(c1 - c2)
+            if jnp.abs(c1 - c2) <= diff_tol_a + diff_tol_r * jnp.abs( c1 ):
+                diff = jnp.abs(c1 - c2)
                 logger.info( f"Terminated: |c1 - c2| = {diff}"
                               " <= diff_tol_a + diff_tol_r * |c1|." )
                 break;
@@ -124,7 +126,7 @@ def optimize ( circuit, target, diff_tol_a = 1e-12, diff_tol_r = 1e-6,
             ct.apply_right( circuit[k] )
 
         c2 = c1
-        c1 = np.abs( np.trace( ct.utry ) )
+        c1 = jnp.abs( np.trace( ct.utry ) )
         c1 = 1 - ( c1 / ( 2 ** ct.num_qubits ) )
 
         if c1 <= dist_tol:
@@ -155,5 +157,5 @@ def get_distance ( circuit, target ):
 
     ct = CircuitTensor( target, circuit )
     num_qubits = utils.get_num_qubits( target )
-    return 1 - ( np.abs( np.trace( ct.utry ) ) / ( 2 ** num_qubits ) )
+    return 1 - ( jnp.abs( np.trace( ct.utry ) ) / ( 2 ** num_qubits ) )
 
