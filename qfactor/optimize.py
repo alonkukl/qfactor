@@ -4,6 +4,7 @@ import logging
 
 import numpy as np
 import jax
+import time
 import jax.numpy as jnp
 
 from qfactor import utils
@@ -96,6 +97,7 @@ def optimize ( circuit, target, diff_tol_a = 1e-12, diff_tol_r = 1e-6,
 
         it += 1
 
+        tic = time.perf_counter()
         # from right to left
         for k in range( len( circuit ) ):
             rk = len( circuit ) - 1 - k
@@ -129,6 +131,9 @@ def optimize ( circuit, target, diff_tol_a = 1e-12, diff_tol_r = 1e-6,
         c1 = jnp.abs( jnp.trace( ct.utry ) )
         c1 = 1 - ( c1 / ( 2 ** ct.num_qubits ) )
 
+        toc = time.perf_counter()
+
+        print(f"iteration took {toc-tic} seconeds")
         if c1 <= dist_tol:
             logger.info( f"Terminated: c1 = {c1} <= dist_tol." )
             return circuit
