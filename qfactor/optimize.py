@@ -3,6 +3,7 @@
 import logging
 
 import numpy as np
+import time
 
 from qfactor import utils
 from qfactor.gates import Gate
@@ -94,6 +95,7 @@ def optimize ( circuit, target, diff_tol_a = 1e-12, diff_tol_r = 1e-6,
 
         it += 1
 
+        tic = time.perf_counter()
         # from right to left
         for k in range( len( circuit ) ):
             rk = len( circuit ) - 1 - k
@@ -126,7 +128,9 @@ def optimize ( circuit, target, diff_tol_a = 1e-12, diff_tol_r = 1e-6,
         c2 = c1
         c1 = np.abs( np.trace( ct.utry ) )
         c1 = 1 - ( c1 / ( 2 ** ct.num_qubits ) )
+        toc = time.perf_counter()
 
+        print(f"Iteration took {toc-tic} secondes")
         if c1 <= dist_tol:
             logger.info( f"Terminated: c1 = {c1} <= dist_tol." )
             return circuit
