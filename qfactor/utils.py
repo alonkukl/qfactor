@@ -15,7 +15,7 @@ def get_num_qubits ( M ):
     if not is_square_matrix( M ):
         raise TypeError( "Invalid matrix." )
 
-    return int( jnp.log2( len( M ) ) )
+    return int( np.log2( len( M ) ) )
 
 
 def is_valid_location ( location, num_qubits = None ):
