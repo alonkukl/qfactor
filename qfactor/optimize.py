@@ -100,14 +100,16 @@ def optimize ( circuit, target, diff_tol_a = 1e-12, diff_tol_r = 1e-6,
         it += 1
 
         
-        # c1 = iter_jit(circuit, slowdown_factor, ct, c1).block_until_ready()
+        c1, ct, circuit = iter_jit(circuit, slowdown_factor, ct, c1)
+        c1 = c1.block_until_ready()
         tic = time.perf_counter()
         # from right to left
-        c1 = iter_jit(circuit, slowdown_factor, ct, c1).block_until_ready()
+        c1, ct, circuit = iter_jit(circuit, slowdown_factor, ct, c1)
+        c1 = c1.block_until_ready()
 
         toc = time.perf_counter()
 
-        # print(f"iteration took {toc-tic} seconeds")
+        print(f"iteration took {toc-tic} seconeds")
         if c1 <= dist_tol:
             logger.info( f"Terminated: c1 = {c1} <= dist_tol." )
             return circuit
@@ -151,7 +153,7 @@ def single_iteration(circuit, slowdown_factor, ct, c1):
     c2 = c1
     c1 = jnp.abs( jnp.trace( ct.utry ) )
     c1 = 1 - ( c1 / ( 2 ** ct.num_qubits ) )
-    return c1
+    return c1, ct, circuit
 
 
 def get_distance ( circuit, target ):
