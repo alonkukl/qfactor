@@ -187,7 +187,6 @@ class CircuitTensor():
         return env_mat
 
 
-from jax import tree_util
-tree_util.register_pytree_node(CircuitTensor,
+jax.tree_util.register_pytree_node(CircuitTensor,
                                 CircuitTensor._tree_flatten,
                                 CircuitTensor._tree_unflatten)

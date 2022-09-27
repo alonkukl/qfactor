@@ -3,7 +3,7 @@
 
 import scipy.linalg as la
 import jax.scipy.linalg as jla
-
+import jax
 
 from qfactor import utils
 
@@ -134,7 +134,6 @@ class Gate():
 
 
 
-import jax
 jax.tree_util.register_pytree_node(Gate,
                                Gate._tree_flatten,
                                Gate._tree_unflatten)
