@@ -80,6 +80,8 @@ def optimize ( circuit, target, diff_tol_a = 1e-12, diff_tol_r = 1e-6,
     c2 = 1
     it = 0
 
+    iter_jit = jax.jit(single_iteration)
+
     while True:
 
         # Termination conditions
@@ -97,43 +99,15 @@ def optimize ( circuit, target, diff_tol_a = 1e-12, diff_tol_r = 1e-6,
 
         it += 1
 
+        
+        # c1 = iter_jit(circuit, slowdown_factor, ct, c1).block_until_ready()
         tic = time.perf_counter()
         # from right to left
-        for k in range( len( circuit ) ):
-            rk = len( circuit ) - 1 - k
-
-            # Remove current gate from right of circuit tensor
-            ct.apply_right( circuit[rk], inverse = True )
-
-            # Update current gate
-            if not circuit[rk].fixed:
-                env = ct.calc_env_matrix( circuit[rk].location )
-                circuit[rk].update( env, slowdown_factor )
-
-            # Add updated gate to left of circuit tensor
-            ct.apply_left( circuit[rk] )
-
-        # from left to right
-        for k in range( len( circuit ) ):
-
-            # Remove current gate from left of circuit tensor
-            ct.apply_left( circuit[k], inverse = True )
-
-            # Update current gate
-            if not circuit[k].fixed:
-                env = ct.calc_env_matrix( circuit[k].location )
-                circuit[k].update( env, slowdown_factor )
-
-            # Add updated gate to right of circuit tensor
-            ct.apply_right( circuit[k] )
-
-        c2 = c1
-        c1 = jnp.abs( jnp.trace( ct.utry ) )
-        c1 = 1 - ( c1 / ( 2 ** ct.num_qubits ) )
+        c1 = iter_jit(circuit, slowdown_factor, ct, c1).block_until_ready()
 
         toc = time.perf_counter()
 
-        print(f"iteration took {toc-tic} seconeds")
+        # print(f"iteration took {toc-tic} seconeds")
         if c1 <= dist_tol:
             logger.info( f"Terminated: c1 = {c1} <= dist_tol." )
             return circuit
@@ -145,6 +119,39 @@ def optimize ( circuit, target, diff_tol_a = 1e-12, diff_tol_r = 1e-6,
             ct.reinitialize()
 
     return circuit
+
+def single_iteration(circuit, slowdown_factor, ct, c1):
+    for k in range( len( circuit ) ):
+        rk = len( circuit ) - 1 - k
+
+            # Remove current gate from right of circuit tensor
+        ct.apply_right( circuit[rk], inverse = True )
+
+            # Update current gate
+        if not circuit[rk].fixed:
+            env = ct.calc_env_matrix( circuit[rk].location )
+            circuit[rk].update( env, slowdown_factor )
+
+            # Add updated gate to left of circuit tensor
+        ct.apply_left( circuit[rk] )
+
+        # from left to right
+    for k in range( len( circuit ) ):
+            # Remove current gate from left of circuit tensor
+        ct.apply_left( circuit[k], inverse = True )
+
+            # Update current gate
+        if not circuit[k].fixed:
+            env = ct.calc_env_matrix( circuit[k].location )
+            circuit[k].update( env, slowdown_factor )
+
+            # Add updated gate to right of circuit tensor
+        ct.apply_right( circuit[k] )
+
+    c2 = c1
+    c1 = jnp.abs( jnp.trace( ct.utry ) )
+    c1 = 1 - ( c1 / ( 2 ** ct.num_qubits ) )
+    return c1
 
 
 def get_distance ( circuit, target ):

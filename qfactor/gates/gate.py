@@ -4,13 +4,14 @@
 import scipy.linalg as la
 import jax.scipy.linalg as jla
 
+
 from qfactor import utils
 
 
 class Gate():
     """A Gate is a unitary operation applied to a set of qubits."""
 
-    def __init__ ( self, utry, location, fixed = False, check_params = True ):
+    def __init__ ( self, utry, location, fixed = False  ):
         """
         Gate Constructor
 
@@ -24,7 +25,10 @@ class Gate():
             check_params (bool): True implies parameters are checked for
                 correctness.
         """
+        if(type(utry) == type(True)):
+            print("SDAGG")
 
+        check_params = False
         if check_params:
             if not utils.is_unitary( utry ):
                 raise TypeError( "Specified matrix is not unitary." )
@@ -42,6 +46,18 @@ class Gate():
         self.location = location
         self.gate_size = len( location )
         self.fixed = fixed
+
+    def  _tree_flatten(self):
+        children = (self.utry,)  # arrays / dynamic values
+        aux_data = {'location': self.location,                    
+                    'fixed':self.fixed}  # static values
+        return (children, aux_data)
+
+
+    @classmethod
+    def _tree_unflatten(cls, aux_data, children):
+        return cls(*children, **aux_data)
+
 
     def get_inverse ( self ):
         """Returns the inverse of this gate."""
@@ -116,3 +132,9 @@ class Gate():
                + str( self.utry[-1][-1] ) \
                + "]]"
 
+
+
+import jax
+jax.tree_util.register_pytree_node(Gate,
+                               Gate._tree_flatten,
+                               Gate._tree_unflatten)

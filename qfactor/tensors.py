@@ -23,25 +23,27 @@ class CircuitTensor():
 
             gate_list (list[Gate]): The circuit's gate list.
         """
+        if(False):
+            if not utils.is_unitary( utry_target ):
+                raise TypeError( "Specified target matrix is not unitary." )
 
-        if not utils.is_unitary( utry_target ):
-            raise TypeError( "Specified target matrix is not unitary." )
+            if not isinstance( gate_list, list ):
+                raise TypeError( "Gate list is not a list." )
 
-        if not isinstance( gate_list, list ):
-            raise TypeError( "Gate list is not a list." )
+            if not all( [ isinstance( gate, Gate ) for gate in gate_list ] ):
+                raise TypeError( "Gate list contains non-gate objects." )
 
-        if not all( [ isinstance( gate, Gate ) for gate in gate_list ] ):
-            raise TypeError( "Gate list contains non-gate objects." )
+
+            if not all( [ utils.is_valid_location( gate.location, self.num_qubits )
+                        for gate in gate_list ] ):
+                raise ValueError( "Gate location mismatch with circuit tensor." )
 
         self.utry_target = utry_target
         self.num_qubits = utils.get_num_qubits( self.utry_target )
 
-        if not all( [ utils.is_valid_location( gate.location, self.num_qubits )
-                      for gate in gate_list ] ):
-            raise ValueError( "Gate location mismatch with circuit tensor." )
-
         self.gate_list = gate_list
         self.reinitialize()
+
 
     def reinitialize ( self ):
         """Reconstruct the circuit tensor."""
@@ -53,6 +55,16 @@ class CircuitTensor():
         for gate in self.gate_list:
             self.apply_right( gate )
 
+    def  _tree_flatten(self):
+        children = (self.gate_list,)  # arrays / dynamic values
+        aux_data = ( self.utry_target,)  # static values
+        return (children, aux_data)
+
+
+    @classmethod
+    def _tree_unflatten(cls, aux_data, children):
+        return cls(*aux_data, *children)
+    
     @property
     def utry ( self ):
         """Calculates this circuit tensor's unitary representation."""
@@ -174,3 +186,8 @@ class CircuitTensor():
 
         return env_mat
 
+
+from jax import tree_util
+tree_util.register_pytree_node(CircuitTensor,
+                                CircuitTensor._tree_flatten,
+                                CircuitTensor._tree_unflatten)
