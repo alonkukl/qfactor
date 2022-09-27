@@ -98,23 +98,20 @@ class CircuitTensor():
         """
         
         gate = self.gate_list[gate_index]
-        gate_tensor = gate.get_tensor_format()
- 
-        if inverse:
-            offset = 0
-            gate_tensor = gate_tensor.conj()
-        else:
-            offset = gate.gate_size
-            
-        gate_tensor_indexs = [i for i in range(2*gate.gate_size)]
-        
-        circuit_tensor_indexs = [2*gate.gate_size + i  for i in range(2*self.num_qubits)]        
-        output_tensor_index = [ 2*gate.gate_size + i  for i in range(2*self.num_qubits)]
-        for i, loc in enumerate(gate.location):
-            circuit_tensor_indexs[loc] = offset + i
-            output_tensor_index[loc] = (gate.gate_size - offset) + i
-        
-        self.tensor  = jnp.einsum(gate_tensor, gate_tensor_indexs, self.tensor, circuit_tensor_indexs, output_tensor_index)
+        left_perm = list( gate.location )
+        mid_perm = [ x for x in range( self.num_qubits ) if x not in gate.location ]
+        right_perm = [ x + self.num_qubits for x in range( self.num_qubits ) ]
+
+        utry = gate.utry.conj().T if inverse else gate.utry
+
+        perm = left_perm + mid_perm + right_perm
+        self.tensor = self.tensor.transpose( perm )
+        self.tensor = self.tensor.reshape( ( 2 ** len( left_perm ), -1 ) )
+        self.tensor = utry @ self.tensor
+
+        self.tensor = self.tensor.reshape( [2] * 2 * self.num_qubits )
+        inv_perm = np.argsort( perm )
+        self.tensor = self.tensor.transpose( inv_perm )
 
     def apply_left ( self, gate_index, inverse = False ):
         """
@@ -140,22 +137,20 @@ class CircuitTensor():
         """
 
         gate = self.gate_list[gate_index]
-        gate_tensor = gate.get_tensor_format()
-        if inverse:            
-            offset = gate.gate_size
-            gate_tensor = gate_tensor.conj()
-        else:
-            offset = 0
-            
-        gate_tensor_indexs = [i for i in range(2*gate.gate_size)]
-        
-        circuit_tensor_indexs = [2*gate.gate_size + i  for i in range(2*self.num_qubits)]        
-        output_tensor_index = [ 2*gate.gate_size + i  for i in range(2*self.num_qubits)]
-        for i, loc in enumerate(gate.location):
-            circuit_tensor_indexs[self.num_qubits + loc] = offset + i
-            output_tensor_index[self.num_qubits + loc] = (gate.gate_size - offset) + i
+        left_perm = list( range( self.num_qubits ) )
+        mid_perm = [ x + self.num_qubits for x in left_perm if x not in gate.location ]
+        right_perm = [ x + self.num_qubits for x in gate.location ]
 
-        self.tensor  = jnp.einsum(gate_tensor, gate_tensor_indexs, self.tensor, circuit_tensor_indexs, output_tensor_index)
+        utry = gate.utry.conj().T if inverse else gate.utry
+
+        perm = left_perm + mid_perm + right_perm
+        self.tensor = self.tensor.transpose( perm )
+        self.tensor = self.tensor.reshape( ( -1, 2 ** len( right_perm ) ) )
+        self.tensor = self.tensor @ utry
+
+        self.tensor = self.tensor.reshape( [2] * 2 * self.num_qubits )
+        inv_perm = np.argsort( perm )
+        self.tensor = self.tensor.transpose( inv_perm )
         
     def calc_env_matrix ( self, location ):
         """
@@ -170,23 +165,19 @@ class CircuitTensor():
             (np.ndarray): The environmental matrix.
         """
 
-        if not isinstance( location, tuple ):
-            raise TypeError("Location given is not a tuple")
-            
-        if not utils.is_valid_location( location, self.num_qubits ):
-            raise ValueError( "Gate location mismatch with circuit tensor.", location, self.num_qubits )
-        
+        left_perm = list( range( self.num_qubits ) )
+        left_perm = [ x for x in left_perm if x not in location ]
+        left_perm = left_perm + [ x + self.num_qubits for x in left_perm ]
+        right_perm = list( location ) + [ x + self.num_qubits
+                                          for x in location ]
 
-        contraction_indexs = list(range(self.num_qubits))+list(range(self.num_qubits))
-        for i, loc in enumerate(location):            
-            contraction_indexs[loc+self.num_qubits] = self.num_qubits + i + 1
-
-        contraction_indexs_str = "".join([chr(ord('a')+i) for i in contraction_indexs])
-
-        env_tensor = jnp.einsum(contraction_indexs_str, self.tensor)
-        env_mat = env_tensor.reshape((2**len(location), -1))
-
-        return env_mat
+        perm = left_perm + right_perm
+        a = jnp.transpose( self.tensor, perm )
+        a = jnp.reshape( a, ( 2 ** ( self.num_qubits - len( location ) ),
+                             2 ** ( self.num_qubits - len( location ) ),
+                             2 ** len( location ),
+                             2 ** len( location ) ) )
+        return jnp.trace( a )
 
 
 jax.tree_util.register_pytree_node(CircuitTensor,
