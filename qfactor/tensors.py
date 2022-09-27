@@ -52,8 +52,8 @@ class CircuitTensor():
         self.tensor = self.utry_target.conj().T
         self.tensor = self.tensor.reshape( [2] * 2 * self.num_qubits )
 
-        for gate in self.gate_list:
-            self.apply_right( gate )
+        for gate_index in range(len(self.gate_list)):
+            self.apply_right( gate_index )
 
     def  _tree_flatten(self):
         children = (self.gate_list,)  # arrays / dynamic values
@@ -74,7 +74,7 @@ class CircuitTensor():
         # print( paulis[0] )
         return utry
 
-    def apply_right ( self, gate, inverse = False ):
+    def apply_right ( self, gate_index, inverse = False ):
         """
         Apply the specified gate on the right of the circuit.
 
@@ -97,6 +97,7 @@ class CircuitTensor():
             inverse (bool): If true, apply the inverse of gate.
         """
         
+        gate = self.gate_list[gate_index]
         gate_tensor = gate.get_tensor_format()
  
         if inverse:
@@ -115,7 +116,7 @@ class CircuitTensor():
         
         self.tensor  = jnp.einsum(gate_tensor, gate_tensor_indexs, self.tensor, circuit_tensor_indexs, output_tensor_index)
 
-    def apply_left ( self, gate, inverse = False ):
+    def apply_left ( self, gate_index, inverse = False ):
         """
         Apply the specified gate on the left of the circuit.
 
@@ -138,6 +139,7 @@ class CircuitTensor():
             inverse (bool): If true, apply the inverse of gate.
         """
 
+        gate = self.gate_list[gate_index]
         gate_tensor = gate.get_tensor_format()
         if inverse:            
             offset = gate.gate_size

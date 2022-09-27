@@ -100,11 +100,11 @@ def optimize ( circuit, target, diff_tol_a = 1e-12, diff_tol_r = 1e-6,
         it += 1
 
         
-        c1, ct, circuit = iter_jit(circuit, slowdown_factor, ct, c1)
-        c1 = c1.block_until_ready()
+        # c1, ct, circuit = iter_jit(circuit, slowdown_factor, ct, c1)
+        # c1 = c1.block_until_ready()
         tic = time.perf_counter()
         # from right to left
-        c1, ct, circuit = iter_jit(circuit, slowdown_factor, ct, c1)
+        c1, ct = iter_jit(slowdown_factor, ct, c1)
         c1 = c1.block_until_ready()
 
         toc = time.perf_counter()
@@ -120,14 +120,15 @@ def optimize ( circuit, target, diff_tol_a = 1e-12, diff_tol_r = 1e-6,
         if it % 40 == 0:
             ct.reinitialize()
 
-    return circuit
+    return ct.gate_list
 
-def single_iteration(circuit, slowdown_factor, ct, c1):
+def single_iteration(slowdown_factor, ct, c1):
+    circuit = ct.gate_list
     for k in range( len( circuit ) ):
         rk = len( circuit ) - 1 - k
 
             # Remove current gate from right of circuit tensor
-        ct.apply_right( circuit[rk], inverse = True )
+        ct.apply_right( rk, inverse = True )
 
             # Update current gate
         if not circuit[rk].fixed:
@@ -135,12 +136,12 @@ def single_iteration(circuit, slowdown_factor, ct, c1):
             circuit[rk].update( env, slowdown_factor )
 
             # Add updated gate to left of circuit tensor
-        ct.apply_left( circuit[rk] )
+        ct.apply_left( rk )
 
         # from left to right
     for k in range( len( circuit ) ):
             # Remove current gate from left of circuit tensor
-        ct.apply_left( circuit[k], inverse = True )
+        ct.apply_left( k, inverse = True )
 
             # Update current gate
         if not circuit[k].fixed:
@@ -148,12 +149,12 @@ def single_iteration(circuit, slowdown_factor, ct, c1):
             circuit[k].update( env, slowdown_factor )
 
             # Add updated gate to right of circuit tensor
-        ct.apply_right( circuit[k] )
+        ct.apply_right(k)
 
     c2 = c1
     c1 = jnp.abs( jnp.trace( ct.utry ) )
     c1 = 1 - ( c1 / ( 2 ** ct.num_qubits ) )
-    return c1, ct, circuit
+    return c1, ct
 
 
 def get_distance ( circuit, target ):
