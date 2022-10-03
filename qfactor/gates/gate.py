@@ -25,8 +25,6 @@ class Gate():
             check_params (bool): True implies parameters are checked for
                 correctness.
         """
-        if(type(utry) == type(True)):
-            print("SDAGG")
 
         check_params = False
         if check_params:
