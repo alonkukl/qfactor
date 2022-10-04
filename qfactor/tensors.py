@@ -14,7 +14,7 @@ logger = logging.getLogger( "qfactor" )
 class CircuitTensor():
     """A CircuitTensor tracks an entire circuit as a tensor."""
 
-    def __init__ ( self, utry_target, gate_list ):
+    def __init__ ( self, utry_target, gate_list, check_params=False ):
         """
         CircuitTensor Constructor
 
@@ -23,7 +23,7 @@ class CircuitTensor():
 
             gate_list (list[Gate]): The circuit's gate list.
         """
-        if(False):
+        if(check_params):
             if not utils.is_unitary( utry_target ):
                 raise TypeError( "Specified target matrix is not unitary." )
 
@@ -42,7 +42,9 @@ class CircuitTensor():
         self.num_qubits = utils.get_num_qubits( self.utry_target )
 
         self.gate_list = gate_list
-        self.reinitialize()
+        
+        if all([isinstance(g, Gate) and (type(g.utry) is not object ) for g in gate_list]):
+            self.reinitialize()
 
 
     def reinitialize ( self ):
